@@ -502,7 +502,7 @@ function renderTabs(){
 const initials=t=>base(t).split(/\s+/).filter(w=>/^[A-Z0-9]/.test(w)).slice(0,2).map(w=>w[0]).join("");
 function card(m){
   const f=fit(m),p=parts(m),dd=days(m),st=STATUS[m.s],r=ratings[m.t]||0,al=!!alerts[m.t];
-  const when=dd>0?`Opens in ${dd} day${dd===1?"":"s"}`:(m.s==="now"?"Playing now":"Released");
+  const when=m.s==="now"?(dd>0?`Playing now · IMAX return in ${dd} days`:"Playing now"):dd>0?`Opens in ${dd} day${dd===1?"":"s"}`:"Released";
   const n=sortedTh(m)[0];
   return `<article class="card" style="--hue:${m.hue}" data-tilt>
    <button class="poster" data-open="${esc(m.t)}" aria-label="Open box office for ${esc(m.t)}">
