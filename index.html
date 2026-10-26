@@ -220,8 +220,7 @@ footer{margin-top:24px;font:12px var(--mono);color:var(--ink-faint)}
 <div class="wrap">
   <header class="marquee">
     <div class="bulbs" id="bulbs" aria-hidden="true"></div>
-    <div class="eyebrow" id="eyebrow">Now showing · Parsippany, NJ 07054</div>
-    <h1>Movie Radar</h1>
+    <h1>Kiru's Movie Radar</h1>
     <p class="lede">Every film here is scored against <b>your</b> taste: action, comedy and romcom first, then critic love on Rotten Tomatoes, Oscar pedigree, how close it sits to the movies you already adore, and how quickly you can get to a screen.</p>
     <div class="favs" aria-label="Your favourite films">
       <span class="chip fav">Independence Day</span><span class="chip fav">Titanic</span><span class="chip fav">Gladiator</span><span class="chip fav">Indian award winners</span><span class="chip fav">Global acclaim</span>
@@ -428,7 +427,6 @@ $("#locBtn").addEventListener("click",()=>{
     origin={lat:p.coords.latitude,lng:p.coords.longitude,label:"your location"};
     $("#pin").classList.add("live");
     $("#locText").innerHTML=`Drive times from <b>your current location</b>, updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}.`;
-    $("#eyebrow").textContent="Now showing · near you";
     $("#locBtn").textContent="Refresh location";
     toast("Drive times updated from where you are");
     route();
