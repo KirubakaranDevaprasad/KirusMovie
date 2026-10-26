@@ -26,3 +26,12 @@ Static, zero-build. Open `index.html`, or serve it with GitHub Pages.
 
 ## Data
 Release dates, RT scores and ticket status checked 26 Oct 2026. Update the `M` array in `index.html` to refresh the slate.
+
+## New in v2
+- **Posters** load live from Wikipedia (free, no API key) and are cached in your browser
+- **Box office drawer**: tap any poster for the trailer, reviews, 3-day ticket outlook, theaters and seat map
+- **Real drive times** from OpenStreetMap routing (OSRM), from Parsippany or your live location, with Google Maps directions
+- **3-day ticket outlook**: today, tomorrow and the day after, based on release and on-sale dates
+- **Seat preference**: middle or back rows, never rows A–D, shown on a seat map
+- **Last 12 months taste memory**: 14 recent films with starter ratings based on your genres. Change any star and the fit scores re-rank
+- Search, "Surprise me", sort by closest screen, card tilt

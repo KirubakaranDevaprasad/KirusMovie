@@ -4,13 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Kiru's Movie Radar</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Personal movie radar for Parsippany, NJ — action, comedy and romcom picks scored against Kiru's taste, with Rotten Tomatoes scores, Oscar pedigree, nearby theaters and star ratings.">
+<meta name="description" content="Personal movie radar: action, comedy and romcom picks scored against Kiru's taste, with posters, Rotten Tomatoes scores, Oscar pedigree, live drive times to nearby theaters, 3-day ticket outlook and seat preferences.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Monoton&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: a night-at-the-marquee — bulb-lit hero, a strip of ticket-stub cards, then a lobby of analytics. Single dark world by design. */
+/* Layout: a night at the marquee. Bulb-lit hero, a strip of poster tickets, a detail "box office" drawer, then a lobby of analytics. Single dark world by design. */
 :root{
   --night:#140a22; --night-2:#1f1033; --stub:#271541; --line:#3d2760;
   --ink:#f7efe1; --ink-dim:#c4b4d8; --ink-faint:#8f7bab;
@@ -21,14 +20,18 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{background:var(--night);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px;overflow-x:hidden}
+img{max-width:100%}
+[hidden]{display:none!important}
 #sky{position:fixed;inset:0;z-index:0;pointer-events:none;width:100%;height:100%}
 body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='120' height='120' filter='url(%23n)' fill='white'/></svg>")}
 .wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto}
 a{color:var(--gold)}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+button{font-family:inherit}
 
 /* Marquee hero */
 .marquee{margin-top:24px;position:relative;border-radius:22px;padding:34px clamp(18px,4vw,48px) 30px;
@@ -45,76 +48,128 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,7.4vw,86px);l
 .favs{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
 .chip{font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:rgba(20,10,34,.55);color:var(--ink-dim)}
 .chip.fav{border-color:#7a5420;color:var(--gold)}
+.locbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:18px;padding:10px 12px;border-radius:14px;background:rgba(20,10,34,.6);border:1px solid var(--line)}
+.locbar .pin{width:10px;height:10px;border-radius:50%;background:var(--ink-faint);flex:none}
+.locbar .pin.live{background:var(--lime);box-shadow:0 0 0 0 rgba(140,240,138,.7);animation:ping 1.8s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(140,240,138,.6)}100%{box-shadow:0 0 0 12px rgba(140,240,138,0)}}
+.locbar span{font-size:13.5px;color:var(--ink-dim);flex:1;min-width:180px}
+.locbar b{color:var(--ink)}
 
-/* Summary stats */
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0 0}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 0}
 .stat{background:rgba(20,10,34,.6);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .stat .n{font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
 .stat .l{font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em}
 @media(max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* Controls */
-.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-top:26px;padding:12px 0;background:linear-gradient(var(--night) 70%,transparent)}
-.tabs,.genres{display:flex;gap:8px;flex-wrap:wrap}
-.genres{margin-top:10px;align-items:center}
-.tab,.g,.sortsel{font:600 14px var(--body);color:var(--ink-dim);background:var(--night-2);border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-top:22px;padding:12px 0;background:linear-gradient(var(--night) 78%,transparent)}
+.tabs,.genres{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.genres{margin-top:10px}
+.tab,.g,.sortsel,.search{font:600 14px var(--body);color:var(--ink-dim);background:var(--night-2);border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--gold);color:#2a1606;border-color:var(--gold);box-shadow:0 0 18px rgba(255,200,74,.45)}
 .g{font-size:13px;padding:6px 12px}
 .g[aria-pressed="true"]{border-color:var(--rose);color:var(--ink);background:rgba(255,79,139,.18)}
-.sortsel{margin-left:auto;appearance:none;padding-right:15px}
-.count{font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+.search{cursor:text;font-weight:400;min-width:0;flex:1 1 180px;max-width:280px;color:var(--ink)}
+.search::placeholder{color:var(--ink-faint)}
+.sortsel{appearance:none}
+.count{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-left:auto}
+.btn{font:600 13px var(--body);text-decoration:none;border-radius:10px;padding:8px 12px;border:1px solid var(--line);color:var(--ink);background:var(--night-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--gold)}
+.btn.primary{background:var(--rose);border-color:var(--rose);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#2a1606}
+.btn[aria-pressed="true"]{background:rgba(65,211,255,.18);border-color:var(--cyan);color:#cdf4ff}
 
 /* Cards */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:8px}
 @media(max-width:420px){.grid{grid-template-columns:1fr}}
-.card{position:relative;background:var(--stub);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;
-  border:1px solid var(--line);transition:transform .25s,box-shadow .25s}
-.card:hover{transform:translateY(-4px);box-shadow:0 20px 50px -18px rgba(255,79,139,.5)}
-.top{position:relative;padding:16px 16px 14px;display:grid;grid-template-columns:1fr auto;gap:12px;
-  background:var(--hue,linear-gradient(135deg,#3a1a64,#5e1a49))}
-.top::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:14px;
-  background:radial-gradient(circle at 7px 7px,var(--night) 6px,transparent 6.5px) 0 0/20px 14px repeat-x}
-.badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-.b{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(0,0,0,.35);color:var(--ink)}
-.b.now{background:var(--lime);color:#0f2a0e}.b.sale{background:var(--gold);color:#2a1606}.b.soon{background:rgba(65,211,255,.25);color:#cdf4ff}
-.b.classic{background:rgba(255,157,66,.25);color:#ffd9b5}.b.intl{background:rgba(255,79,139,.3);color:#ffd2e1}
-.title{font-weight:800;font-size:21px;line-height:1.15;margin:0;text-wrap:balance}
-.meta{font-family:var(--mono);font-size:12px;color:rgba(247,239,225,.78);margin-top:4px}
-.ring{--p:50;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;flex:none;
-  background:conic-gradient(var(--ringc,var(--gold)) calc(var(--p)*1%),rgba(0,0,0,.35) 0)}
-.ring span{width:50px;height:50px;border-radius:50%;background:var(--stub);display:grid;place-items:center;font:600 16px var(--mono);font-variant-numeric:tabular-nums}
-.ring small{display:block;font-size:8.5px;color:var(--ink-faint);letter-spacing:.1em;text-align:center;margin-top:-2px}
-.body{padding:18px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}
+.card{position:relative;background:var(--stub);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);
+  transition:transform .25s,box-shadow .25s,border-color .25s;transform-style:preserve-3d}
+.card:hover{box-shadow:0 22px 50px -18px rgba(255,79,139,.55);border-color:#6a4596}
+.poster{position:relative;height:250px;overflow:hidden;background:var(--hue);cursor:pointer;border:0;padding:0;width:100%;text-align:left;color:inherit;display:block}
+.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 22%;opacity:0;transition:opacity .6s,transform .6s}
+.poster img.ok{opacity:1}
+.card:hover .poster img{transform:scale(1.05)}
+.poster .initials{position:absolute;right:14px;bottom:52px;font:400 64px var(--display);color:rgba(255,255,255,.18);line-height:1}
+.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,10,34,.15) 0%,rgba(20,10,34,0) 35%,rgba(20,10,34,.92) 100%)}
+.poster .over{position:absolute;left:14px;right:14px;bottom:12px;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.poster .peek{position:absolute;top:12px;right:12px;z-index:1;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;background:rgba(20,10,34,.75);border:1px solid var(--line);padding:4px 8px;border-radius:6px;opacity:0;transition:opacity .2s}
+.card:hover .peek,.poster:focus-visible .peek{opacity:1}
+.badges{display:flex;gap:6px;flex-wrap:wrap;position:absolute;top:12px;left:12px;z-index:1;max-width:70%}
+.b{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(0,0,0,.55);color:var(--ink)}
+.b.now{background:var(--lime);color:#0f2a0e}.b.sale{background:var(--gold);color:#2a1606}.b.soon{background:rgba(20,60,80,.85);color:#cdf4ff}
+.b.classic{background:rgba(120,60,10,.85);color:#ffd9b5}.b.intl{background:rgba(140,20,70,.85);color:#ffd2e1}
+.title{font-weight:800;font-size:21px;line-height:1.15;margin:0;text-wrap:balance;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.meta{font-family:var(--mono);font-size:12px;color:rgba(247,239,225,.82);margin-top:4px}
+.ring{--p:50;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;flex:none;background:conic-gradient(var(--ringc,var(--gold)) calc(var(--p)*1%),rgba(0,0,0,.45) 0)}
+.ring span{width:48px;height:48px;border-radius:50%;background:var(--stub);display:grid;place-items:center;font:600 16px var(--mono);font-variant-numeric:tabular-nums;text-align:center;line-height:1.05}
+.ring small{display:block;font-size:8.5px;color:var(--ink-faint);letter-spacing:.1em}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}
 .why{margin:0;color:var(--ink-dim);font-size:14px}
-.scores{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px}
+.scores{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;align-items:center}
 .scores .k{color:var(--ink-faint)} .scores .v{color:var(--ink);font-weight:600}
+.cd{font:600 12px var(--mono);color:var(--cyan)}
 .oscar{font-size:13px;padding:8px 10px;border-radius:10px;background:rgba(255,200,74,.09);border:1px solid rgba(255,200,74,.28);color:#ffe2a0}
 .oscar::before{content:"★ ";color:var(--gold)}
-.bars{display:grid;gap:5px}
-.bar{display:grid;grid-template-columns:78px 1fr 30px;gap:8px;align-items:center;font:11px var(--mono);color:var(--ink-faint)}
-.track{height:6px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
-.fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rose),var(--gold))}
-.bar b{color:var(--ink-dim);font-weight:400;text-align:right;font-variant-numeric:tabular-nums}
-.where{font-size:13px;color:var(--ink-dim)}
-.where ul{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:3px}
-.where li{display:flex;justify-content:space-between;gap:8px}
-.where li span:last-child{font-family:var(--mono);color:var(--ink-faint);white-space:nowrap}
-.rate{display:flex;align-items:center;gap:10px;justify-content:space-between;border-top:1px dashed var(--line);padding-top:12px;margin-top:auto}
+.days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.day{border-radius:10px;padding:7px 8px;border:1px solid var(--line);background:rgba(0,0,0,.2);font-size:12px;line-height:1.3;min-width:0}
+.day b{display:block;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+.day.yes{border-color:rgba(140,240,138,.55);background:rgba(140,240,138,.1)} .day.yes span{color:var(--lime)}
+.day.pre{border-color:rgba(255,200,74,.5);background:rgba(255,200,74,.08)} .day.pre span{color:var(--gold)}
+.day.no span{color:var(--ink-faint)}
+.near{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);padding:8px 10px;border-radius:10px;background:rgba(65,211,255,.07);border:1px solid rgba(65,211,255,.25)}
+.near b{color:var(--ink)} .near .mono{font-family:var(--mono);color:var(--cyan);white-space:nowrap}
+.rate{display:flex;align-items:center;gap:10px;justify-content:space-between;border-top:1px dashed var(--line);padding-top:12px;margin-top:auto;flex-wrap:wrap}
 .stars{display:flex;gap:2px}
 .star{background:none;border:0;padding:2px;cursor:pointer;font-size:24px;line-height:1;color:#4d3870;transition:transform .15s,color .15s}
 .star.on{color:var(--gold);text-shadow:0 0 10px rgba(255,200,74,.6)}
-.star:hover{transform:scale(1.2)}
+.star:hover{transform:scale(1.25)}
 .rlab{font:11px var(--mono);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{font:600 13px var(--body);text-decoration:none;border-radius:10px;padding:8px 12px;border:1px solid var(--line);color:var(--ink);background:var(--night-2);cursor:pointer}
-.btn.primary{background:var(--rose);border-color:var(--rose);color:#fff}
-.btn[aria-pressed="true"]{background:rgba(65,211,255,.18);border-color:var(--cyan);color:#cdf4ff}
-.count-down{font:600 12px var(--mono);color:var(--cyan)}
 .empty{padding:40px;text-align:center;color:var(--ink-faint);border:1px dashed var(--line);border-radius:16px}
 
-/* Analytics lobby */
-h2{font-weight:800;font-size:clamp(24px,3.4vw,34px);margin:52px 0 6px;letter-spacing:-.01em}
-h2 em{font-style:normal;color:var(--rose)}
+/* Box office drawer */
+dialog{border:0;padding:0;background:transparent;color:var(--ink);max-width:min(980px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 24px)}
+dialog::backdrop{background:rgba(8,3,15,.78);backdrop-filter:blur(6px)}
+.box{background:var(--night-2);border:1px solid var(--line);border-radius:22px;overflow:auto;max-height:calc(100dvh - 24px);box-shadow:0 40px 100px -20px rgba(255,79,139,.45)}
+.box-head{display:grid;grid-template-columns:220px minmax(0,1fr);gap:22px;padding:22px;background:var(--hue);position:relative}
+.box-head::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(31,16,51,.35),rgba(31,16,51,.92) 45%)}
+.box-head>*{position:relative}
+.box-poster{width:220px;aspect-ratio:2/3;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.3);box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.box-poster img{width:100%;height:100%;object-fit:cover}
+.box h2{font-size:clamp(26px,4vw,38px);margin:6px 0 6px;line-height:1.05;text-wrap:balance}
+.box-close{position:absolute;top:14px;right:14px;z-index:2;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(20,10,34,.8);color:var(--ink);font-size:20px;cursor:pointer}
+.box-body{padding:22px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px}
+@media(max-width:760px){.box-head{grid-template-columns:1fr}.box-poster{width:150px}.box-body{grid-template-columns:1fr}}
+.sec h3{margin:0 0 4px;font-size:16px}
+.sec p.hint{margin:0 0 12px;font-size:12.5px;color:var(--ink-faint)}
+.th-list{display:grid;gap:8px}
+.th{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.18)}
+.th .nm{font-weight:600;font-size:14px;min-width:0}
+.th .ad{font-size:12px;color:var(--ink-faint);grid-column:1}
+.th .drive{grid-row:1/3;grid-column:2;text-align:right;font:600 15px var(--mono);color:var(--cyan);white-space:nowrap;align-self:center}
+.th .drive small{display:block;font-size:11px;color:var(--ink-faint);font-weight:400}
+.th .links{grid-column:1/3;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.th .links a{font-size:12.5px}
+.th.best{border-color:rgba(140,240,138,.5);background:rgba(140,240,138,.06)}
+.seatpick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.screen{height:8px;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(90deg,transparent,var(--cyan),transparent);margin:0 auto 4px;width:80%;opacity:.8}
+.screen-l{text-align:center;font:10px var(--mono);letter-spacing:.3em;color:var(--ink-faint);margin-bottom:10px}
+.seats{display:grid;gap:4px;overflow-x:auto}
+.srow{display:grid;grid-template-columns:16px repeat(14,minmax(10px,1fr));gap:3px;align-items:center}
+.srow b{font:600 10px var(--mono);color:var(--ink-faint)}
+.seat{aspect-ratio:1;border-radius:3px 3px 5px 5px;background:#3a2a55}
+.seat.skip{background:#2a1d3d;opacity:.5}
+.seat.pref{background:var(--lime);box-shadow:0 0 6px rgba(140,240,138,.6)}
+.seat.ok{background:#5a4680}
+.seat.gap{visibility:hidden}
+.seatkey{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-faint)}
+.seatkey i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.ask{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(140,240,138,.08);border:1px solid rgba(140,240,138,.35);font-size:13.5px}
+.ask b{color:var(--lime)}
+
+/* Lobby */
+h2.lob{font-weight:800;font-size:clamp(24px,3.4vw,34px);margin:52px 0 6px;letter-spacing:-.01em}
+h2.lob em{font-style:normal;color:var(--rose)}
 .sub{color:var(--ink-dim);margin:0 0 18px;max-width:70ch}
 .lobby{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 @media(max-width:900px){.lobby{grid-template-columns:1fr}}
@@ -122,38 +177,60 @@ h2 em{font-style:normal;color:var(--rose)}
 .panel h3{margin:0 0 4px;font-size:16px}
 .panel p{margin:0 0 14px;font-size:13px;color:var(--ink-faint)}
 .pie-wrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.pie{width:170px;height:170px;border-radius:50%;position:relative;flex:none;box-shadow:0 0 40px -8px rgba(255,79,139,.5)}
+.pie{width:170px;height:170px;border-radius:50%;position:relative;flex:none;box-shadow:0 0 40px -8px rgba(255,79,139,.5);transition:transform .3s}
+.pie:hover{transform:rotate(12deg) scale(1.03)}
 .pie::after{content:attr(data-c);position:absolute;inset:38px;border-radius:50%;background:var(--night-2);display:grid;place-items:center;font:600 22px var(--mono);color:var(--ink)}
 .legend{display:grid;gap:6px;font-size:13px;min-width:0}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
 .legend span{font-family:var(--mono);color:var(--ink-faint);margin-left:6px}
-.hbar{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr) 44px;gap:8px;align-items:center;font-size:12.5px;margin-bottom:7px}
+.hbar{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr) 58px;gap:8px;align-items:center;font-size:12.5px;margin-bottom:7px}
 .hbar .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-dim)}
 .hbar .val{font-family:var(--mono);text-align:right;color:var(--ink-faint);font-variant-numeric:tabular-nums}
-.hbar .track{height:9px}
-.hbar .fill.cy{background:linear-gradient(90deg,var(--cyan),#9f7bff)}
+.track{height:9px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+.fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rose),var(--gold));transition:width .6s}
+.fill.cy{background:linear-gradient(90deg,var(--cyan),#9f7bff)}
+.bars{display:grid;gap:5px}
+.bar{display:grid;grid-template-columns:78px 1fr 30px;gap:8px;align-items:center;font:11px var(--mono);color:var(--ink-faint)}
+.bar .track{height:6px}
+.bar b{color:var(--ink-dim);font-weight:400;text-align:right}
 .weeks{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:10px;border-bottom:1px solid var(--line)}
 .wk{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .wk .col{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(var(--gold),var(--rose));min-height:3px}
 .wk b{font:600 11px var(--mono)}
 .wklab{display:flex;gap:6px}.wklab span{flex:1;text-align:center;font:10px var(--mono);color:var(--ink-faint);min-width:0}
-.note{margin-top:28px;font-size:13px;color:var(--ink-faint);max-width:80ch}
+.taste{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+@media(max-width:900px){.taste{grid-template-columns:1fr}}
+.seedhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.seedlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:600px){.seedlist{grid-template-columns:1fr}}
+.seedrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.18)}
+.seedrow .nm{font-weight:600;font-size:14px}
+.seedrow .star{font-size:18px;padding:1px}
+.seedrow .who{font:10px var(--mono);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em}
+.note{margin-top:28px;font-size:13px;color:var(--ink-faint);max-width:82ch}
 .note b{color:var(--ink-dim)}
-footer{margin-top:30px;font:12px var(--mono);color:var(--ink-faint)}
+footer{margin-top:24px;font:12px var(--mono);color:var(--ink-faint)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(30px);opacity:0;z-index:50;background:var(--gold);color:#2a1606;font-weight:600;padding:10px 16px;border-radius:12px;transition:.3s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-
 <canvas id="sky" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="marquee">
     <div class="bulbs" id="bulbs" aria-hidden="true"></div>
-    <div class="eyebrow">Now showing · Parsippany, NJ 07054</div>
+    <div class="eyebrow" id="eyebrow">Now showing · Parsippany, NJ 07054</div>
     <h1>Movie Radar</h1>
-    <p class="lede">Every film here is scored against <b>your</b> taste: action, comedy and romcom first, then critic love on Rotten Tomatoes, Oscar pedigree, how close it sits to the movies you already adore, and how easy it is to catch near home.</p>
+    <p class="lede">Every film here is scored against <b>your</b> taste: action, comedy and romcom first, then critic love on Rotten Tomatoes, Oscar pedigree, how close it sits to the movies you already adore, and how quickly you can get to a screen.</p>
     <div class="favs" aria-label="Your favourite films">
       <span class="chip fav">Independence Day</span><span class="chip fav">Titanic</span><span class="chip fav">Gladiator</span><span class="chip fav">Indian award winners</span><span class="chip fav">Global acclaim</span>
+    </div>
+    <div class="locbar">
+      <i class="pin" id="pin"></i>
+      <span id="locText">Drive times from <b>Parsippany, NJ</b>. Share your location for times from where you are right now.</span>
+      <button class="btn gold" id="locBtn">Use my location</button>
+      <button class="btn" id="surprise">Surprise me</button>
     </div>
     <div class="stats" id="stats"></div>
   </header>
@@ -166,267 +243,440 @@ footer{margin-top:30px;font:12px var(--mono);color:var(--ink-faint)}
   <main>
     <div class="grid" id="grid"></div>
 
-    <h2>The <em>lobby</em> — your analytics</h2>
-    <p class="sub">How the slate lines up with what you like, how far each screen is from home, and what your own star ratings are saying.</p>
-    <div class="lobby">
-      <div class="panel">
-        <h3>Strong matches by genre</h3>
-        <p>Films scoring 70+ on your fit meter</p>
-        <div class="pie-wrap"><div class="pie" id="pie"></div><div class="legend" id="legend"></div></div>
-      </div>
-      <div class="panel">
-        <h3>Theaters near home</h3>
-        <p>Miles from Parsippany</p>
-        <div id="dist"></div>
-      </div>
-      <div class="panel">
-        <h3>Release radar</h3>
-        <p>New releases & returns, by week from today</p>
-        <div class="weeks" id="weeks"></div>
-        <div class="wklab" id="wklab"></div>
-      </div>
-      <div class="panel">
-        <h3>Fit leaderboard</h3>
-        <p>Top 8 across the whole slate</p>
-        <div id="leader"></div>
-      </div>
-      <div class="panel">
-        <h3>Your stars by genre</h3>
-        <p>Average of the ratings you've given</p>
-        <div id="mine"></div>
-      </div>
-      <div class="panel">
-        <h3>Ticket alerts</h3>
-        <p>Films you've flagged, with days to go</p>
-        <div id="alerts"></div>
-      </div>
+    <h2 class="lob">Your <em>last 12 months</em> at the movies</h2>
+    <p class="sub">Starter ratings for big releases from the past year, set from your favourite genres so the radar has something to learn from. Change any star and every fit score above re-ranks instantly.</p>
+    <div class="taste">
+      <div class="panel"><div class="seedhead"><h3>Rated for you</h3><button class="btn" id="seedReset">Reset starter ratings</button></div><div class="seedlist" id="seedList"></div></div>
+      <div class="panel"><h3>Your taste profile</h3><p>Genre weight used in the fit score: your starting preferences blended with the stars above and on each card. Count in brackets.</p><div id="profile"></div></div>
     </div>
 
-    <p class="note"><b>About the data.</b> Release dates, Rotten Tomatoes scores and ticket status were checked on 26 Oct 2026. Upcoming films show "Not yet reviewed" until critics weigh in. Theater lists are the best nearby bets for that kind of film, not confirmed showtimes. Live seat counts aren't published openly, so the Tickets button opens Fandango where you can pick a seat. Your stars and alerts are saved in this browser.</p>
-    <footer>Built for Kirubakaran Devaprasad · part of the personal projects collection</footer>
+    <h2 class="lob">The <em>lobby</em> — your analytics</h2>
+    <p class="sub">How the slate lines up with what you like, how long each screen takes to reach, and what your own star ratings are saying.</p>
+    <div class="lobby">
+      <div class="panel"><h3>Strong matches by genre</h3><p>Films scoring 70+ on your fit meter</p>
+        <div class="pie-wrap"><div class="pie" id="pie"></div><div class="legend" id="legend"></div></div></div>
+      <div class="panel"><h3>Drive time to each theater</h3><p id="distSub">Minutes by car from Parsippany</p><div id="dist"></div></div>
+      <div class="panel"><h3>Release radar</h3><p>New releases & returns, by week from today</p>
+        <div class="weeks" id="weeks"></div><div class="wklab" id="wklab"></div></div>
+      <div class="panel"><h3>Fit leaderboard</h3><p>Top 8 across the whole slate</p><div id="leader"></div></div>
+      <div class="panel"><h3>Your stars by genre</h3><p>Average of the ratings you've given</p><div id="mine"></div></div>
+      <div class="panel"><h3>Ticket alerts</h3><p>Films you've flagged, with days to go</p><div id="alerts"></div></div>
+    </div>
+
+    <p class="note"><b>About the data.</b> Release dates, Rotten Tomatoes scores and on-sale status were checked on 26 Oct 2026. The 3-day ticket outlook is worked out from those release and sale dates; exact showtimes and seat maps aren't published openly, so each "Book" button opens Fandango where you pick the seat. Drive times come from OpenStreetMap routing and don't include live traffic. Posters load from Wikipedia. Your stars, alerts and seat preference are saved in this browser.</p>
+    <footer>Built for Kirubakaran Devaprasad · <a href="https://kirubakarandevaprasad.github.io/Kirubakaran-Devaprasad-Portfolio/#work">part of my personal projects</a></footer>
   </main>
 </div>
 
+<dialog id="box" aria-labelledby="boxTitle"><div class="box" id="boxInner"></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
 (function(){
-const TODAY = new Date(2026,9,26);
+const DAY0 = (()=>{const d=new Date();d.setHours(0,0,0,0);return d})();
+const HOME = {lat:40.8576,lng:-74.4259,label:"Parsippany, NJ"};
 const TH = {
-  eh:{n:"AMC East Hanover 12",d:4}, hq:{n:"AMC Headquarters Plaza 10, Morristown",d:5}, rk:{n:"AMC Rockaway 16",d:7},
-  ch:{n:"Chatham Hickory Cinema",d:8}, wb:{n:"Cinemark Willowbrook Mall & XD, Wayne",d:8}, wy:{n:"AMC Wayne 14",d:9},
-  eg:{n:"AMC Dine-In Essex Green 9, West Orange",d:9}, mo:{n:"MONDO Summit",d:10}, cl:{n:"The Clairidge, Montclair",d:11},
-  bv:{n:"Bellevue Theatre, Montclair",d:11}, cc:{n:"AMC Clifton Commons 16",d:14}, wa:{n:"Cinemark Watchung & XD",d:15}
+  eh:{n:"AMC East Hanover 12",a:"145 NJ-10, East Hanover, NJ 07936",lat:40.8093,lng:-74.3808,d:4},
+  hq:{n:"AMC Headquarters Plaza 10",a:"72 Speedwell Ave, Morristown, NJ 07960",lat:40.8004,lng:-74.4819,d:5},
+  rk:{n:"AMC Rockaway 16",a:"363 Mount Hope Ave, Rockaway, NJ 07866",lat:40.9097,lng:-74.5581,d:7},
+  ch:{n:"Chatham Hickory Cinema",a:"636 Shunpike Rd, Chatham, NJ 07928",lat:40.7463,lng:-74.4318,d:8},
+  wb:{n:"Cinemark Willowbrook Mall & XD",a:"1400 Willowbrook Mall, Wayne, NJ 07470",lat:40.8886,lng:-74.2624,d:8},
+  wy:{n:"AMC Wayne 14",a:"67 Willowbrook Blvd, Wayne, NJ 07470",lat:40.8881,lng:-74.2506,d:9},
+  eg:{n:"AMC Dine-In Essex Green 9",a:"495 Prospect Ave, West Orange, NJ 07052",lat:40.7934,lng:-74.2569,d:9},
+  mo:{n:"MONDO Summit",a:"426 Springfield Ave, Summit, NJ 07901",lat:40.7178,lng:-74.3606,d:10},
+  cl:{n:"The Clairidge",a:"486 Bloomfield Ave, Montclair, NJ 07042",lat:40.8143,lng:-74.2184,d:11},
+  bv:{n:"Bellevue Theatre",a:"260 Bellevue Ave, Montclair, NJ 07043",lat:40.8412,lng:-74.2089,d:11},
+  cc:{n:"AMC Clifton Commons 16",a:"405 NJ-3, Clifton, NJ 07014",lat:40.8289,lng:-74.1402,d:14},
+  wa:{n:"Cinemark Watchung & XD",a:"1670 US-22, Watchung, NJ 07069",lat:40.6457,lng:-74.4086,d:15}
 };
-const BIG=["eh","rk","wb"], ART=["cl","ch","mo"], IND=["rk","wy","cc"], CLASSIC=["eh","hq","eg"];
-// status: now | sale | soon | classic ; acclaim 0-100 ; echo = taste similarity to favourites 0-100
+const BIG=["eh","rk","wb","wy"], ART=["cl","ch","mo","bv"], IND=["rk","wy","cc","eh"], CLASSIC=["eh","hq","eg","rk"];
 const M = [
- {t:"Avengers: Doomsday",d:"2026-12-18",s:"sale",g:["Action"],rt:null,ac:70,echo:92,lang:"English · USA",th:BIG,
+ {t:"Avengers: Doomsday",d:"2026-12-18",s:"sale",g:["Action"],rt:null,ac:70,echo:92,lang:"English · USA",th:BIG,wq:"Avengers: Doomsday",
   why:"The Independence Day energy you love, scaled up: a world-ending threat and every hero on deck.",osc:null,hue:"linear-gradient(135deg,#5b1430,#2a1660)"},
- {t:"Ramayana: Part 1",d:"2026-11-05",s:"sale",g:["Action","Epic"],rt:null,ac:80,echo:95,lang:"Hindi (+ Tamil, Telugu) · India",th:IND,intl:1,
+ {t:"Ramayana: Part 1",d:"2026-11-05",s:"sale",g:["Action","Epic"],rt:null,ac:80,echo:95,lang:"Hindi (+ Tamil, Telugu) · India",th:IND,intl:1,wq:"Ramayana: Part 1",
   why:"A Gladiator-scale mythic epic from India with Ranbir Kapoor, Yash and Sai Pallavi. US advance bookings already passed $100K.",osc:"Directed by Nitesh Tiwari of Dangal, one of India's most decorated films",hue:"linear-gradient(135deg,#7a3d06,#5b1430)"},
- {t:"Godzilla Minus Zero",d:"2026-11-06",s:"soon",g:["Action"],rt:null,ac:82,echo:90,lang:"Japanese · Japan",th:BIG,intl:1,
+ {t:"Godzilla Minus Zero",d:"2026-11-06",s:"soon",g:["Action"],rt:null,ac:82,echo:90,lang:"Japanese · Japan",th:BIG,intl:1,wq:"Godzilla Minus Zero",
   why:"Big-screen disaster spectacle in the Independence Day mould, with real emotional weight.",osc:"Follow-up to Godzilla Minus One, which won the Oscar for Best Visual Effects",hue:"linear-gradient(135deg,#0d3a4a,#1b1450)"},
- {t:"Dune: Part Three",d:"2026-12-18",s:"soon",g:["Action","Epic"],rt:null,ac:88,echo:86,lang:"English · USA",th:BIG,
+ {t:"Dune: Part Three",d:"2026-12-18",s:"soon",g:["Action","Epic"],rt:null,ac:88,echo:86,lang:"English · USA",th:BIG,wq:"Dune: Part Three",
   why:"Desert wars, empires and destiny. The closest thing to Gladiator on this year's slate.",osc:"Predicted Best Picture contender; Dune: Part Two won Oscars for Sound and Visual Effects",hue:"linear-gradient(135deg,#6b3a10,#33140d)"},
- {t:"The Odyssey",d:"2026-11-17",s:"now",g:["Action","Epic"],rt:94,pm:96,ac:96,echo:94,lang:"English · USA",th:BIG,
+ {t:"The Odyssey",d:"2026-11-17",s:"now",g:["Action","Epic"],rt:94,pm:96,ac:96,echo:94,lang:"English · USA",th:BIG,wq:"The Odyssey (2026 film)",run:"2026-07-17",
   why:"Nolan's Homer epic with Matt Damon. Ancient-world heroics straight out of your Gladiator wheelhouse; back in IMAX from Nov 17.",osc:"Considered a Best Picture lock; Nolan won Best Picture for Oppenheimer",hue:"linear-gradient(135deg,#123a5c,#3b1a5e)"},
- {t:"Spider-Man: Brand New Day",d:"2026-07-31",s:"now",g:["Action","Comedy"],rt:90,pm:97,ac:88,echo:72,lang:"English · USA",th:BIG,
+ {t:"Spider-Man: Brand New Day",d:"2026-07-31",s:"now",g:["Action","Comedy"],rt:90,pm:97,ac:88,echo:72,lang:"English · USA",th:BIG,wq:"Spider-Man: Brand New Day",
   why:"Crowd-pleasing action with real laughs, and audiences love it.",osc:null,hue:"linear-gradient(135deg,#6a0f22,#1c2a6b)"},
- {t:"How to Rob a Bank",d:"2026-11-13",s:"soon",g:["Action","Comedy"],rt:null,ac:55,echo:62,lang:"English · USA",th:BIG,
+ {t:"How to Rob a Bank",d:"2026-11-13",s:"soon",g:["Action","Comedy"],rt:null,ac:55,echo:62,lang:"English · USA",th:BIG,wq:"How to Rob a Bank 2026 film Nicholas Hoult",
   why:"Heist thriller with Nicholas Hoult, John C. Reilly and Pete Davidson. Action and comedy in one ticket.",osc:null,hue:"linear-gradient(135deg,#1d4a2a,#3a1a50)"},
- {t:"Violent Night 2",d:"2026-12-04",s:"soon",g:["Action","Comedy"],rt:null,ac:52,echo:58,lang:"English · USA",th:BIG,
+ {t:"Violent Night 2",d:"2026-12-04",s:"soon",g:["Action","Comedy"],rt:null,ac:52,echo:58,lang:"English · USA",th:BIG,wq:"Violent Night 2",
   why:"Holiday action-comedy sequel. Pure popcorn fun for December.",osc:null,hue:"linear-gradient(135deg,#7a0d1c,#0f3b2a)"},
- {t:"The Man With the Bag",d:"2026-12-02",s:"soon",g:["Comedy","Action"],rt:null,ac:45,echo:55,lang:"English · USA",th:BIG,
+ {t:"The Man With the Bag",d:"2026-12-02",s:"soon",g:["Comedy","Action"],rt:null,ac:45,echo:55,lang:"English · USA",th:BIG,wq:"The Man with the Bag film Schwarzenegger",
   why:"Arnold Schwarzenegger as Santa with Awkwafina and Alan Ritchson. Family holiday action-comedy.",osc:null,hue:"linear-gradient(135deg,#7a1020,#3a2a08)"},
- {t:"Focker In-Law",d:"2026-11-25",s:"soon",g:["Comedy"],rt:null,ac:45,echo:40,lang:"English · USA",th:BIG,
+ {t:"Focker In-Law",d:"2026-11-25",s:"soon",g:["Comedy"],rt:null,ac:45,echo:40,lang:"English · USA",th:BIG,wq:"Focker In-Law",
   why:"De Niro and Ben Stiller return for Thanksgiving, with Ariana Grande joining the family chaos.",osc:null,hue:"linear-gradient(135deg,#4a2a08,#2a1450)"},
- {t:"Wild Horse Nine",d:"2026-11-06",s:"soon",g:["Comedy"],rt:null,ac:92,echo:45,lang:"English · USA/UK",th:ART,
+ {t:"Wild Horse Nine",d:"2026-11-06",s:"soon",g:["Comedy"],rt:null,ac:92,echo:45,lang:"English · USA/UK",th:ART,wq:"Wild Horse Nine",
   why:"Martin McDonagh dark comedy with Sam Rockwell, John Malkovich and Steve Buscemi.",osc:"Considered a Best Picture lock; McDonagh's past films earned multiple acting Oscars",hue:"linear-gradient(135deg,#2a3a0d,#4a1430)"},
- {t:"In a Holidaze",d:"2026-12-02",s:"soon",g:["Romcom"],rt:null,ac:40,echo:55,lang:"English · USA",th:BIG,
+ {t:"In a Holidaze",d:"2026-12-02",s:"soon",g:["Romcom"],rt:null,ac:40,echo:55,lang:"English · USA",th:BIG,wq:"In a Holidaze film",
   why:"Time-loop holiday romcom with Maddie Ziegler and Rob Lowe. Light, cosy date night.",osc:null,hue:"linear-gradient(135deg,#7a1a4a,#2a3a6a)"},
- {t:"Hershey",d:"2026-11-25",s:"soon",g:["Romance"],rt:null,ac:50,echo:70,lang:"English · USA",th:BIG,
+ {t:"Hershey",d:"2026-11-25",s:"soon",g:["Romance"],rt:null,ac:50,echo:70,lang:"English · USA",th:BIG,wq:"Hershey 2026 film Finn Wittrock",
   why:"Period love story with Finn Wittrock and Alexandra Daddario. Sweeping romance in the Titanic tradition.",osc:null,hue:"linear-gradient(135deg,#4a1a0d,#6a1a3a)"},
- {t:"Sense and Sensibility",d:"2026-10-16",s:"now",g:["Romance"],rt:76,pm:88,ac:72,echo:72,lang:"English · UK",th:BIG,
+ {t:"Sense and Sensibility",d:"2026-10-16",s:"now",g:["Romance"],rt:76,pm:88,ac:72,echo:72,lang:"English · UK",th:BIG,wq:"Sense and Sensibility 2026 film",
   why:"Fresh Austen adaptation. Period romance and heartbreak that Titanic fans tend to love.",osc:null,hue:"linear-gradient(135deg,#3a1a5c,#6a1a3a)"},
- {t:"Possible Love",d:"2026-10-23",s:"now",g:["Romance"],rt:100,ac:94,echo:66,lang:"Korean · South Korea",th:ART,intl:1,
+ {t:"Possible Love",d:"2026-10-23",s:"now",g:["Romance"],rt:100,ac:94,echo:66,lang:"Korean · South Korea",th:ART,intl:1,wq:"Possible Love Lee Chang-dong film",
   why:"Lee Chang-dong's romance with Jeon Do-yeon. A perfect 100% from critics.",osc:"Named a possible Best Picture contender",hue:"linear-gradient(135deg,#0d3a4a,#6a1a3a)"},
- {t:"La Bola Negra",d:"2026-12-02",s:"soon",g:["Drama"],rt:null,ac:92,echo:50,lang:"Spanish · Spain",th:ART,intl:1,
+ {t:"La Bola Negra",d:"2026-12-02",s:"soon",g:["Drama"],rt:null,ac:92,echo:50,lang:"Spanish · Spain",th:ART,intl:1,wq:"La bola negra film",
   why:"Los Javis drama with Penélope Cruz and Glenn Close, one of the most talked-about films of the season.",osc:"Considered a Best Picture lock",hue:"linear-gradient(135deg,#3a0d0d,#1a1a4a)"},
- {t:"Fatherland",d:"2026-10-23",s:"now",g:["Drama"],rt:91,ac:85,echo:45,lang:"Polish · Poland",th:ART,intl:1,
+ {t:"Fatherland",d:"2026-10-23",s:"now",g:["Drama"],rt:91,ac:85,echo:45,lang:"Polish · Poland",th:ART,intl:1,wq:"Fatherland Pawlikowski film",
   why:"Paweł Pawlikowski's new film, 91% on Rotten Tomatoes.",osc:"Pawlikowski's Ida won Best International Feature",hue:"linear-gradient(135deg,#1a2a3a,#3a1a1a)"},
- {t:"All of a Sudden",d:"2026-11-25",s:"soon",g:["Drama"],rt:null,ac:80,echo:40,lang:"Japanese/French · Japan",th:ART,intl:1,
+ {t:"All of a Sudden",d:"2026-11-25",s:"soon",g:["Drama"],rt:null,ac:80,echo:40,lang:"Japanese/French · Japan",th:ART,intl:1,wq:"All of a Sudden Hamaguchi film",
   why:"Ryusuke Hamaguchi with Virginie Efira and Tao Okamoto.",osc:"Hamaguchi's Drive My Car won Best International Feature",hue:"linear-gradient(135deg,#0d2a3a,#2a1a4a)"},
- {t:"Bitter Christmas",d:"2026-11-13",s:"soon",g:["Drama"],rt:null,ac:78,echo:35,lang:"Spanish · Spain",th:ART,intl:1,
+ {t:"Bitter Christmas",d:"2026-11-13",s:"soon",g:["Drama"],rt:null,ac:78,echo:35,lang:"Spanish · Spain",th:ART,intl:1,wq:"Bitter Christmas Almodóvar film",
   why:"Pedro Almodóvar holiday drama.",osc:"Almodóvar has won two Oscars",hue:"linear-gradient(135deg,#6a0d1a,#0d3a2a)"},
- {t:"The Hunchback, Soul of Paris",d:"2026-11-27",s:"soon",g:["Drama","Epic"],rt:null,ac:55,echo:62,lang:"French · France",th:ART,intl:1,
+ {t:"The Hunchback, Soul of Paris",d:"2026-11-27",s:"soon",g:["Drama","Epic"],rt:null,ac:55,echo:62,lang:"French · France",th:ART,intl:1,wq:"Hunchback Soul of Paris film Vincent Cassel",
   why:"Period epic with Vincent Cassel. Grand, tragic and romantic.",osc:null,hue:"linear-gradient(135deg,#2a1a0d,#3a1a5c)"},
- {t:"Paper Tiger",d:"2026-11-13",s:"soon",g:["Crime"],rt:null,ac:78,echo:48,lang:"English · USA",th:BIG,
+ {t:"Paper Tiger",d:"2026-11-13",s:"soon",g:["Crime"],rt:null,ac:78,echo:48,lang:"English · USA",th:BIG,wq:"Paper Tiger James Gray film",
   why:"James Gray crime drama with Miles Teller, Scarlett Johansson and Adam Driver.",osc:"Named a possible Best Picture contender",hue:"linear-gradient(135deg,#3a2a0d,#0d1a3a)"},
- {t:"The Further Mis-Adventures of Cliff Booth",d:"2026-11-25",s:"soon",g:["Action","Comedy"],rt:null,ac:76,echo:55,lang:"English · USA",th:BIG,
+ {t:"The Further Mis-Adventures of Cliff Booth",d:"2026-11-25",s:"soon",g:["Action","Comedy"],rt:null,ac:76,echo:55,lang:"English · USA",th:BIG,wq:"Cliff Booth film Fincher Brad Pitt",
   why:"Brad Pitt returns as Cliff Booth, written by Tarantino and directed by David Fincher.",osc:"Pitt won Best Supporting Actor for this character in Once Upon a Time in Hollywood",hue:"linear-gradient(135deg,#6a3a0d,#3a0d2a)"},
- {t:"The Hunger Games: Sunrise on the Reaping",d:"2026-11-20",s:"soon",g:["Action"],rt:null,ac:60,echo:68,lang:"English · USA",th:BIG,
+ {t:"The Hunger Games: Sunrise on the Reaping",d:"2026-11-20",s:"soon",g:["Action"],rt:null,ac:60,echo:68,lang:"English · USA",th:BIG,wq:"The Hunger Games: Sunrise on the Reaping film",
   why:"Arena survival action, the closest modern cousin to Gladiator's fight-to-live stakes.",osc:null,hue:"linear-gradient(135deg,#5a1a0d,#1a1a1a)"},
- {t:"Rocky · 50th Anniversary",d:"2026-11-07",s:"classic",g:["Drama","Action"],rt:null,ac:90,echo:70,lang:"English · USA",th:CLASSIC,
-  why:"One-week return of the original underdog story on the big screen.",osc:"Won Best Picture",hue:"linear-gradient(135deg,#3a0d0d,#1a2a4a)"},
- {t:"A Beautiful Mind · 25th",d:"2026-11-22",s:"classic",g:["Drama"],rt:null,ac:88,echo:66,lang:"English · USA",th:CLASSIC,
+ {t:"Rocky · 50th Anniversary",d:"2026-11-07",s:"classic",g:["Drama","Action"],rt:null,ac:90,echo:70,lang:"English · USA",th:CLASSIC,wq:"Rocky 1976 film",
+  why:"Limited return of the original underdog story on the big screen.",osc:"Won Best Picture",hue:"linear-gradient(135deg,#3a0d0d,#1a2a4a)"},
+ {t:"A Beautiful Mind · 25th",d:"2026-11-22",s:"classic",g:["Drama"],rt:null,ac:88,echo:66,lang:"English · USA",th:CLASSIC,wq:"A Beautiful Mind (film)",
   why:"Russell Crowe's follow-up to Gladiator, back in theaters for one weekend.",osc:"Won Best Picture",hue:"linear-gradient(135deg,#1a3a4a,#2a1a3a)"},
- {t:"Moulin Rouge! · 25th",d:"2026-12-12",s:"classic",g:["Romance"],rt:null,ac:80,echo:80,lang:"English · Australia/USA",th:CLASSIC,
+ {t:"Moulin Rouge! · 25th",d:"2026-12-12",s:"classic",g:["Romance"],rt:null,ac:80,echo:80,lang:"English · Australia/USA",th:CLASSIC,wq:"Moulin Rouge! 2001 film",
   why:"Doomed, dazzling romance. The closest thing to Titanic's heartbreak on the re-release list.",osc:"Won two Oscars",hue:"linear-gradient(135deg,#7a0d2a,#3a0d0d)"},
- {t:"The Host · 4K Restoration",d:"2026-11-20",s:"classic",g:["Action"],rt:null,ac:82,echo:62,lang:"Korean · South Korea",th:ART,intl:1,
+ {t:"The Host · 4K Restoration",d:"2026-11-20",s:"classic",g:["Action"],rt:null,ac:82,echo:62,lang:"Korean · South Korea",th:ART,intl:1,wq:"The Host (2006 film)",
   why:"Bong Joon-ho's monster thriller, newly restored.",osc:"Bong went on to win Best Picture with Parasite",hue:"linear-gradient(135deg,#0d3a2a,#1a1a3a)"},
- {t:"Avengers: Endgame",d:"2026-09-25",s:"now",g:["Action"],rt:94,pm:96,ac:88,echo:88,lang:"English · USA",th:BIG,
+ {t:"Avengers: Endgame",d:"2026-09-25",s:"now",g:["Action"],rt:94,pm:96,ac:88,echo:88,lang:"English · USA",th:BIG,wq:"Avengers: Endgame",
   why:"Re-release warm-up before Doomsday. Perfect if you want the full story fresh.",osc:"Nominated for Best Visual Effects",hue:"linear-gradient(135deg,#3a0d4a,#4a2a0d)"}
 ];
-const LIKED = {Action:1,Comedy:1,Romcom:1,Romance:.75,Epic:.8,Crime:.35,Drama:.3};
-const GCOL = {Action:"#ff4f8b",Comedy:"#ffc84a",Romcom:"#ff9d42",Romance:"#c77dff",Epic:"#41d3ff",Drama:"#8cf08a",Crime:"#8f7bab"};
-const STATUS = {now:["now","In theaters"],sale:["sale","Tickets on sale"],soon:["soon","Coming soon"],classic:["classic","Classic returns"]};
+const LIKED={Action:1,Comedy:1,Romcom:1,Romance:.75,Epic:.8,Crime:.35,Drama:.3,"Sci-Fi":.7,Family:.45,Musical:.5,Biopic:.45,Horror:.2};
+// Last 12 months: starter ratings Claude set from Kiru's genre taste (Action/Epic high, Comedy & Romance good, Drama middling, Horror low).
+const SEED=[
+ {t:"Avatar: Fire and Ash",d:"2025-12-19",g:["Action","Epic","Sci-Fi"]},
+ {t:"Dhurandhar",d:"2025-12-05",g:["Action"],intl:1},
+ {t:"Predator: Badlands",d:"2025-11-07",g:["Action","Sci-Fi"]},
+ {t:"Now You See Me: Now You Don't",d:"2025-11-14",g:["Action","Comedy"]},
+ {t:"The Mandalorian and Grogu",d:"2026-05-22",g:["Action","Sci-Fi"]},
+ {t:"Project Hail Mary",d:"2026-03-20",g:["Sci-Fi","Drama"]},
+ {t:"The Devil Wears Prada 2",d:"2026-05-01",g:["Comedy"]},
+ {t:"Zootopia 2",d:"2025-11-26",g:["Comedy","Family"]},
+ {t:"Wuthering Heights",d:"2026-02-13",g:["Romance","Drama"]},
+ {t:"Wicked: For Good",d:"2025-11-21",g:["Musical","Romance"]},
+ {t:"Marty Supreme",d:"2025-12-25",g:["Comedy","Drama"]},
+ {t:"Hamnet",d:"2025-11-27",g:["Drama"]},
+ {t:"Michael",d:"2026-04-24",g:["Biopic","Drama"]},
+ {t:"Scream 7",d:"2026-02-27",g:["Horror"]}
+];
+function seedStars(s){ // category score + a small fixed random nudge per title
+  let h=0;for(const c of s.t)h=(h*31+c.charCodeAt(0))>>>0;
+  const best=Math.max(...s.g.map(g=>LIKED[g]??.4));
+  const jitter=((h%3)-1)*.5; // -0.5, 0, +0.5
+  return Math.max(1,Math.min(5,Math.round(1.2+best*3.4+jitter)));
+}
+const GCOL={Action:"#ff4f8b",Comedy:"#ffc84a",Romcom:"#ff9d42",Romance:"#c77dff",Epic:"#41d3ff",Drama:"#8cf08a",Crime:"#8f7bab"};
+const STATUS={now:["now","In theaters"],sale:["sale","Tickets on sale"],soon:["soon","Coming soon"],classic:["classic","Classic returns"]};
 
-const store = {
-  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-};
-let ratings = store.get("mr.ratings",{}), alerts = store.get("mr.alerts",{});
-let tab = store.get("mr.tab","all"), genre = "All", sort = store.get("mr.sort","fit");
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let ratings=store.get("mr.ratings",{}), alerts=store.get("mr.alerts",{}), posters=store.get("mr.posters.v1",{});
+let tab=store.get("mr.tab","all"), genre="All", sort=store.get("mr.sort","fit"), q="";
+let seatPref=store.get("mr.seat","middle");
+let seedR=Object.assign(Object.fromEntries(SEED.map(s=>[s.t,seedStars(s)])),store.get("mr.seed",{}));
+let seedEdited=store.get("mr.seedEdited",{});
+// Taste profile: blend the starting genre weights with the average stars you (or the seed) gave each genre.
+function taste(){
+  const acc={};
+  SEED.forEach(s=>s.g.forEach(g=>(acc[g]=acc[g]||[]).push(seedR[s.t])));
+  Object.entries(ratings).forEach(([t,v])=>{const m=M.find(x=>x.t===t);if(m)m.g.forEach(g=>(acc[g]=acc[g]||[]).push(v))});
+  const out={};
+  new Set([...Object.keys(LIKED),...Object.keys(acc)]).forEach(g=>{const a=acc[g];const base=LIKED[g]??.4;
+    out[g]=a?{w:base*.55+(a.reduce((x,y)=>x+y,0)/a.length/5)*.45,avg:a.reduce((x,y)=>x+y,0)/a.length,n:a.length}:{w:base,avg:null,n:0}});
+  return out;
+}
+let TASTE={};
+let origin=HOME, drive={}; // drive[key]={min,mi}
 
-const days = m => Math.round((new Date(m.d+"T00:00:00") - TODAY)/864e5);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dayOf=s=>new Date(s+"T00:00:00");
+const days=m=>Math.round((dayOf(m.d)-DAY0)/864e5);
+const fmt=(d,o)=>(typeof d==="string"?dayOf(d):d).toLocaleDateString("en-US",o||{month:"short",day:"numeric",year:"numeric"});
+const base=t=>t.split(" · ")[0];
+const toast=msg=>{const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2200)};
+
+// ── distance & drive time ──
+function haversine(a,b){const R=3958.8,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dg=r(b.lng-a.lng);
+  const h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function estimate(){Object.entries(TH).forEach(([k,t])=>{const mi=haversine(origin,t)*1.3;drive[k]={mi,min:Math.max(3,Math.round(mi/30*60+3)),est:true}})}
+async function route(){
+  estimate(); renderAll();
+  const keys=Object.keys(TH);
+  const coords=[`${origin.lng},${origin.lat}`].concat(keys.map(k=>`${TH[k].lng},${TH[k].lat}`)).join(";");
+  try{
+    const r=await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}?sources=0&annotations=duration,distance`);
+    const j=await r.json(); if(j.code!=="Ok")throw 0;
+    keys.forEach((k,i)=>{const s=j.durations[0][i+1],m=j.distances[0][i+1];if(s!=null)drive[k]={min:Math.max(1,Math.round(s/60)),mi:m/1609.34}});
+  }catch(e){/* keep estimates */}
+  renderAll(); if($("#box").open) openBox(current);
+}
+const mapsLink=k=>{const t=TH[k];return `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${encodeURIComponent(t.n+", "+t.a)}&travelmode=driving`};
+const sortedTh=m=>[...m.th].sort((a,b)=>(drive[a]?.min??99)-(drive[b]?.min??99));
+const dlabel=k=>{const d=drive[k];return d?`${d.est?"~":""}${d.min} min · ${d.mi.toFixed(1)} mi`:"—"};
+
+$("#locBtn").addEventListener("click",()=>{
+  if(!navigator.geolocation){toast("Location isn't available in this browser");return}
+  $("#locBtn").textContent="Locating…";
+  navigator.geolocation.getCurrentPosition(p=>{
+    origin={lat:p.coords.latitude,lng:p.coords.longitude,label:"your location"};
+    $("#pin").classList.add("live");
+    $("#locText").innerHTML=`Drive times from <b>your current location</b>, updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}.`;
+    $("#eyebrow").textContent="Now showing · near you";
+    $("#locBtn").textContent="Refresh location";
+    toast("Drive times updated from where you are");
+    route();
+  },err=>{
+    $("#locBtn").textContent="Use my location";
+    toast(err.code===1?"Location blocked. Allow it in your browser's site settings to use it.":"Couldn't get your location. Showing times from Parsippany.");
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+});
+
+// ── scoring ──
 function parts(m){
-  const genreS = Math.round(100*Math.max(...m.g.map(g=>LIKED[g]||.2)));
-  const acclaim = m.rt!=null ? Math.round((m.rt*.6)+(m.ac*.4)) : m.ac;
-  const near = Math.min(...m.th.map(k=>TH[k].d));
-  const dd = days(m);
-  const access = Math.round(Math.max(0, 100 - near*4 - (m.s==="soon"&&dd>30?15:0)));
+  const genreS=Math.round(100*Math.min(1,Math.max(...m.g.map(g=>TASTE[g]?.w??LIKED[g]??.2))));
+  const acclaim=m.rt!=null?Math.round(m.rt*.6+m.ac*.4):m.ac;
+  const near=Math.min(...m.th.map(k=>drive[k]?.min??TH[k].d*2));
+  const dd=days(m);
+  const access=Math.round(Math.max(0,100-near*2.2-(m.s==="soon"&&dd>30?15:0)));
   return {genreS,acclaim,echo:m.echo,access};
 }
-function fit(m){const p=parts(m);let f=p.genreS*.35+p.acclaim*.3+p.echo*.2+p.access*.15;
-  if(ratings[m.t]) f = f*.8 + ratings[m.t]*4;return Math.round(Math.min(99,f));}
-function ringColor(f){return f>=80?"var(--lime)":f>=65?"var(--gold)":"var(--amber)"}
-const fmt = d => new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-const esc = s => s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fit(m){const p=parts(m);let f=p.genreS*.35+p.acclaim*.3+p.echo*.2+p.access*.15;if(ratings[m.t])f=f*.8+ratings[m.t]*4;return Math.round(Math.min(99,f))}
+const ringColor=f=>f>=80?"var(--lime)":f>=65?"var(--gold)":"var(--amber)";
 
-const TABS=[["all","All films"],["now","In theaters"],["sale","Tickets on sale"],["soon","Coming soon"],["intl","International"],["classic","Classic returns"],["mine","My ratings"]];
-function inTab(m){if(tab==="all")return true;if(tab==="intl")return !!m.intl;if(tab==="mine")return !!ratings[m.t];return m.s===tab}
+// ── 3-day ticket outlook ──
+function outlook(m,offset){
+  const d=new Date(DAY0);d.setDate(d.getDate()+offset);
+  const rel=dayOf(m.run||m.d), open=dayOf(m.d);
+  let showing;
+  if(m.s==="classic"){const end=new Date(open);end.setDate(end.getDate()+6);showing=d>=open&&d<=end}
+  else if(m.s==="now"){showing=d>=rel}
+  else showing=d>=open;
+  const label=offset===0?"Today":offset===1?"Tomorrow":d.toLocaleDateString("en-US",{weekday:"short"});
+  if(showing) return {cls:"yes",label,txt:"Showtimes likely",date:d};
+  if(m.s==="sale") return {cls:"pre",label,txt:`Presale · opens ${fmt(m.d,{month:"short",day:"numeric"})}`,date:d};
+  return {cls:"no",label,txt:"Not on sale yet",date:d};
+}
+const fandango=m=>`https://www.fandango.com/search?q=${encodeURIComponent(base(m.t))}&mode=all`;
 
-function renderTabs(){
-  document.getElementById("tabs").innerHTML = TABS.map(([k,l])=>`<button class="tab" id="tab-${k}" data-k="${k}" aria-pressed="${tab===k}">${l}</button>`).join("");
-  const gs=["All","Action","Comedy","Romcom","Romance","Epic","Drama"];
-  document.getElementById("genres").innerHTML = gs.map(g=>`<button class="g" id="g-${g}" data-g="${g}" aria-pressed="${genre===g}">${g}</button>`).join("")+
-   `<select class="sortsel" id="sortsel" aria-label="Sort by"><option value="fit">Sort: best fit</option><option value="date">Sort: release date</option><option value="rt">Sort: Rotten Tomatoes</option></select><span class="count" id="count"></span>`;
-  document.getElementById("sortsel").value=sort;
+// ── posters (Wikipedia, free, no key) ──
+async function poster(m){
+  if(posters[m.t]) return posters[m.t];
+  try{
+    const u=`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(m.wq||base(m.t)+" film")}&gsrlimit=1&prop=pageimages&piprop=thumbnail&pithumbsize=500&pilicense=any`;
+    const j=await fetch(u).then(r=>r.json());
+    const p=Object.values(j.query?.pages||{})[0];
+    const src=p?.thumbnail?.source||null;
+    if(src){posters[m.t]=src;store.set("mr.posters.v1",posters)}
+    return src;
+  }catch(e){return null}
+}
+function paintPoster(m){
+  const src=posters[m.t]; if(!src) return;
+  document.querySelectorAll(`img[data-poster="${CSS.escape(m.t)}"]`).forEach(img=>{
+    if(img.src!==src){img.onload=()=>img.classList.add("ok");img.onerror=()=>img.remove();img.src=src}else img.classList.add("ok")});
+}
+async function loadPosters(){
+  const queue=M.filter(m=>!posters[m.t]); M.forEach(paintPoster);
+  const worker=async()=>{while(queue.length){const m=queue.shift();if(await poster(m))paintPoster(m)}};
+  await Promise.all([worker(),worker(),worker(),worker()]);
 }
 
+// ── rendering ──
+const TABS=[["all","All films"],["now","In theaters"],["sale","Tickets on sale"],["soon","Coming soon"],["intl","International"],["classic","Classic returns"],["mine","My ratings"]];
+function inTab(m){if(tab==="all")return true;if(tab==="intl")return!!m.intl;if(tab==="mine")return!!ratings[m.t];return m.s===tab}
+function renderTabs(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="tab" data-k="${k}" aria-pressed="${tab===k}">${l}</button>`).join("");
+  const gs=["All","Action","Comedy","Romcom","Romance","Epic","Drama"];
+  $("#genres").innerHTML=gs.map(g=>`<button class="g" data-g="${g}" aria-pressed="${genre===g}">${g}</button>`).join("")+
+   `<input class="search" id="search" type="search" placeholder="Search films, cast, country…" aria-label="Search films" value="${esc(q)}">`+
+   `<select class="sortsel" id="sortsel" aria-label="Sort by"><option value="fit">Sort: best fit</option><option value="date">Sort: release date</option><option value="rt">Sort: Rotten Tomatoes</option><option value="drive">Sort: closest screen</option></select><span class="count" id="count"></span>`;
+  $("#sortsel").value=sort;
+}
+const initials=t=>base(t).split(/\s+/).filter(w=>/^[A-Z0-9]/.test(w)).slice(0,2).map(w=>w[0]).join("");
 function card(m){
   const f=fit(m),p=parts(m),dd=days(m),st=STATUS[m.s],r=ratings[m.t]||0,al=!!alerts[m.t];
-  const q=encodeURIComponent(m.t.split(" · ")[0]);
-  const near=[...m.th].sort((a,b)=>TH[a].d-TH[b].d);
-  const when = dd>0?`Opens in ${dd} day${dd===1?"":"s"}`:(m.s==="now"?"Playing now":"Released");
-  return `<article class="card">
-   <div class="top" style="--hue:${m.hue}">
-    <div style="min-width:0">
-     <div class="badges"><span class="b ${st[0]}">${st[1]}</span>${m.intl?'<span class="b intl">International</span>':""}</div>
-     <h3 class="title">${esc(m.t)}</h3>
-     <div class="meta">${fmt(m.d)} · ${m.g.join(" / ")}</div>
-     <div class="meta">${esc(m.lang)}</div>
-    </div>
-    <div class="ring" style="--p:${f};--ringc:${ringColor(f)}" title="Fit score for you"><span><div>${f}<small>FIT</small></div></span></div>
-   </div>
+  const when=dd>0?`Opens in ${dd} day${dd===1?"":"s"}`:(m.s==="now"?"Playing now":"Released");
+  const n=sortedTh(m)[0];
+  return `<article class="card" style="--hue:${m.hue}" data-tilt>
+   <button class="poster" data-open="${esc(m.t)}" aria-label="Open box office for ${esc(m.t)}">
+    <img alt="" data-poster="${esc(m.t)}" ${posters[m.t]?`src="${esc(posters[m.t])}" onload="this.classList.add('ok')" onerror="this.remove()"`:""}>
+    <span class="initials" aria-hidden="true">${initials(m.t)}</span>
+    <div class="badges"><span class="b ${st[0]}">${st[1]}</span>${m.intl?'<span class="b intl">International</span>':""}</div>
+    <span class="peek">Open box office ↗</span>
+    <div class="over"><div style="min-width:0"><h3 class="title">${esc(m.t)}</h3><div class="meta">${fmt(m.d)} · ${m.g.join(" / ")}</div><div class="meta">${esc(m.lang)}</div></div>
+     <div class="ring" style="--p:${f};--ringc:${ringColor(f)}" title="Fit score for you"><span><div>${f}<small>FIT</small></div></span></div></div>
+   </button>
    <div class="body">
     <p class="why">${esc(m.why)}</p>
     <div class="scores">
      <div><span class="k">Tomatometer </span><span class="v">${m.rt!=null?m.rt+"%":"Not yet reviewed"}</span></div>
      ${m.pm?`<div><span class="k">Audience </span><span class="v">${m.pm}%</span></div>`:""}
-     <div class="count-down">${when}</div>
+     <div class="cd">${when}</div>
     </div>
     ${m.osc?`<div class="oscar">${esc(m.osc)}</div>`:""}
-    <div class="bars" aria-label="Fit breakdown">
-     ${[["Your genres",p.genreS],["Acclaim",p.acclaim],["Taste echo",p.echo],["Easy to see",p.access]].map(([l,v])=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill" style="width:${v}%"></div></div><b>${v}</b></div>`).join("")}
-    </div>
-    <div class="where">Where to look nearby
-     <ul>${near.map(k=>`<li><span>${TH[k].n}</span><span>${TH[k].d} mi</span></li>`).join("")}</ul>
-    </div>
+    <div class="days" aria-label="Ticket outlook for the next 3 days">${[0,1,2].map(i=>{const o=outlook(m,i);return `<div class="day ${o.cls}"><b>${o.label}</b><span>${o.txt}</span></div>`}).join("")}</div>
+    <div class="near"><span>Closest: <b>${esc(TH[n].n)}</b></span><a class="mono" href="${mapsLink(n)}" target="_blank" rel="noopener">${dlabel(n)} ↗</a></div>
+    <div class="bars" aria-label="Fit breakdown">${[["Your genres",p.genreS],["Acclaim",p.acclaim],["Taste echo",p.echo],["Easy to reach",p.access]].map(([l,v])=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill" style="width:${v}%"></div></div><b>${v}</b></div>`).join("")}</div>
     <div class="actions">
-     <a class="btn primary" href="https://www.fandango.com/search?q=${q}&mode=all" target="_blank" rel="noopener">Tickets & seats</a>
-     <a class="btn" href="https://www.rottentomatoes.com/search?search=${q}" target="_blank" rel="noopener">Reviews</a>
-     ${m.s!=="now"?`<button class="btn alert" id="al-${encodeURIComponent(m.t)}" data-t="${esc(m.t)}" aria-pressed="${al}">${al?"Alert on":"Alert me"}</button>`:""}
+     <button class="btn primary" data-open="${esc(m.t)}">Tickets, seats & directions</button>
+     ${m.s!=="now"?`<button class="btn alert" data-t="${esc(m.t)}" aria-pressed="${al}">${al?"Alert on":"Alert me"}</button>`:""}
     </div>
-    <div class="rate"><span class="rlab">Your rating</span>
-     <div class="stars" role="radiogroup" aria-label="Rate ${esc(m.t)}">
-      ${[1,2,3,4,5].map(i=>`<button class="star ${i<=r?"on":""}" data-t="${esc(m.t)}" data-v="${i}" aria-label="${i} star${i>1?"s":""}" aria-checked="${i===r}" role="radio">★</button>`).join("")}
-     </div></div>
+    <div class="rate"><span class="rlab">Your rating</span>${stars(m,r)}</div>
    </div></article>`;
 }
+const stars=(m,r)=>`<div class="stars" role="radiogroup" aria-label="Rate ${esc(m.t)}">${[1,2,3,4,5].map(i=>`<button class="star ${i<=r?"on":""}" data-t="${esc(m.t)}" data-v="${i}" aria-label="${i} star${i>1?"s":""}" aria-checked="${i===r}" role="radio">★</button>`).join("")}</div>`;
 
-function renderGrid(){
-  let list=M.filter(inTab).filter(m=>genre==="All"||m.g.includes(genre));
-  list.sort((a,b)=>sort==="date"?a.d.localeCompare(b.d):sort==="rt"?((b.rt??-1)-(a.rt??-1))||fit(b)-fit(a):fit(b)-fit(a));
-  document.getElementById("grid").innerHTML = list.length?list.map(card).join(""):`<div class="empty">${tab==="mine"?"Rate a film with the stars on any card and it will show up here.":"Nothing matches these filters yet."}</div>`;
-  document.getElementById("count").textContent = `${list.length} film${list.length===1?"":"s"}`;
+function filtered(){
+  const s=q.trim().toLowerCase();
+  let list=M.filter(inTab).filter(m=>genre==="All"||m.g.includes(genre)).filter(m=>!s||(m.t+" "+m.why+" "+m.lang+" "+m.g.join(" ")).toLowerCase().includes(s));
+  const near=m=>drive[sortedTh(m)[0]]?.min??99;
+  list.sort((a,b)=>sort==="date"?a.d.localeCompare(b.d):sort==="rt"?((b.rt??-1)-(a.rt??-1))||fit(b)-fit(a):sort==="drive"?near(a)-near(b)||fit(b)-fit(a):fit(b)-fit(a));
+  return list;
 }
-
+function renderGrid(){
+  const list=filtered();
+  $("#grid").innerHTML=list.length?list.map(card).join(""):`<div class="empty">${tab==="mine"?"Rate a film with the stars on any card and it will show up here.":"Nothing matches these filters yet."}</div>`;
+  $("#count").textContent=`${list.length} film${list.length===1?"":"s"}`;
+}
 function renderStats(){
-  const strong=M.filter(m=>fit(m)>=80).length, sale=M.filter(m=>m.s==="sale").length;
-  const intl=M.filter(m=>m.intl).length, rated=Object.keys(ratings).length;
-  document.getElementById("stats").innerHTML=[[strong,"Strong matches (80+)"],[sale,"Tickets on sale now"],[intl,"International picks"],[rated,"Films you've rated"]]
+  const strong=M.filter(m=>fit(m)>=80).length, today=M.filter(m=>outlook(m,0).cls==="yes").length;
+  const closest=Math.min(...Object.values(drive).map(d=>d.min)), rated=Object.keys(ratings).length;
+  $("#stats").innerHTML=[[strong,"Strong matches (80+)"],[today,"Showing today"],[isFinite(closest)?closest+" min":"—","Nearest screen"],[rated,"Films you've rated"]]
    .map(([n,l])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
 }
-
 function renderLobby(){
-  // pie
-  const strong=M.filter(m=>fit(m)>=70), cnt={};
-  strong.forEach(m=>{const g=m.g[0];cnt[g]=(cnt[g]||0)+1});
-  const tot=strong.length; let acc=0;
-  const segs=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([g,n])=>{const s=acc;acc+=n/tot*100;return `${GCOL[g]} ${s}% ${acc}%`});
-  const pie=document.getElementById("pie"); pie.style.background=`conic-gradient(${segs.join(",")})`; pie.dataset.c=tot;
-  document.getElementById("legend").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`<div><i style="background:${GCOL[g]}"></i>${g}<span>${n} · ${Math.round(n/tot*100)}%</span></div>`).join("");
-  // distances
-  const ths=Object.values(TH).sort((a,b)=>a.d-b.d);
-  document.getElementById("dist").innerHTML=ths.map(t=>`<div class="hbar"><span class="nm" title="${t.n}">${t.n}</span><div class="track"><div class="fill cy" style="width:${t.d/15*100}%"></div></div><span class="val">${t.d} mi</span></div>`).join("");
-  // weeks
-  const W=8, wk=Array(W).fill(0);
-  M.forEach(m=>{const dd=days(m);if(dd>=0&&dd<W*7)wk[Math.floor(dd/7)]++});
-  const mx=Math.max(1,...wk);
-  document.getElementById("weeks").innerHTML=wk.map(n=>`<div class="wk"><b>${n||""}</b><div class="col" style="height:${n/mx*110}px"></div></div>`).join("");
-  document.getElementById("wklab").innerHTML=wk.map((_,i)=>{const d=new Date(TODAY);d.setDate(d.getDate()+i*7);return `<span>${d.toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>`}).join("");
-  // leaderboard
-  document.getElementById("leader").innerHTML=[...M].sort((a,b)=>fit(b)-fit(a)).slice(0,8).map(m=>`<div class="hbar"><span class="nm" title="${esc(m.t)}">${esc(m.t)}</span><div class="track"><div class="fill" style="width:${fit(m)}%"></div></div><span class="val">${fit(m)}</span></div>`).join("");
-  // my stars
-  const byG={};Object.entries(ratings).forEach(([t,v])=>{const m=M.find(x=>x.t===t);if(!m)return;m.g.forEach(g=>{(byG[g]=byG[g]||[]).push(v)})});
-  const ent=Object.entries(byG);
-  document.getElementById("mine").innerHTML=ent.length?ent.map(([g,a])=>{const av=a.reduce((x,y)=>x+y,0)/a.length;return `<div class="hbar"><span class="nm">${g} (${a.length})</span><div class="track"><div class="fill" style="width:${av/5*100}%"></div></div><span class="val">${av.toFixed(1)}★</span></div>`}).join("")
-   :`<div class="empty" style="padding:18px">Tap the stars on any film. Your averages by genre build up here and nudge each fit score.</div>`;
-  // alerts
+  const strong=M.filter(m=>fit(m)>=70),cnt={};strong.forEach(m=>{const g=m.g[0];cnt[g]=(cnt[g]||0)+1});
+  const tot=strong.length||1;let acc=0;const ent=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  const pie=$("#pie");pie.style.background=`conic-gradient(${ent.map(([g,n])=>{const s=acc;acc+=n/tot*100;return `${GCOL[g]} ${s}% ${acc}%`}).join(",")||"#333 0 100%"})`;pie.dataset.c=strong.length;
+  $("#legend").innerHTML=ent.map(([g,n])=>`<div><i style="background:${GCOL[g]}"></i>${g}<span>${n} · ${Math.round(n/tot*100)}%</span></div>`).join("");
+  const ths=Object.entries(TH).sort((a,b)=>(drive[a[0]]?.min??99)-(drive[b[0]]?.min??99));
+  const mx=Math.max(...ths.map(([k])=>drive[k]?.min||1),1);
+  $("#distSub").textContent=`Minutes by car from ${origin.label}${Object.values(drive).some(d=>d.est)?" (estimated)":""}. Tap a bar for directions.`;
+  $("#dist").innerHTML=ths.map(([k,t])=>`<a href="${mapsLink(k)}" target="_blank" rel="noopener" class="hbar" style="text-decoration:none"><span class="nm" title="${esc(t.n)}">${esc(t.n)}</span><div class="track"><div class="fill cy" style="width:${(drive[k]?.min||0)/mx*100}%"></div></div><span class="val">${drive[k]?(drive[k].est?"~":"")+drive[k].min+" min":"—"}</span></a>`).join("");
+  const W=8,wk=Array(W).fill(0);M.forEach(m=>{const dd=days(m);if(dd>=0&&dd<W*7)wk[Math.floor(dd/7)]++});const wm=Math.max(1,...wk);
+  $("#weeks").innerHTML=wk.map(n=>`<div class="wk"><b>${n||""}</b><div class="col" style="height:${n/wm*110}px"></div></div>`).join("");
+  $("#wklab").innerHTML=wk.map((_,i)=>{const d=new Date(DAY0);d.setDate(d.getDate()+i*7);return `<span>${fmt(d,{month:"short",day:"numeric"})}</span>`}).join("");
+  $("#leader").innerHTML=[...M].sort((a,b)=>fit(b)-fit(a)).slice(0,8).map(m=>`<div class="hbar"><span class="nm" title="${esc(m.t)}">${esc(m.t)}</span><div class="track"><div class="fill" style="width:${fit(m)}%"></div></div><span class="val">${fit(m)}</span></div>`).join("");
+  const byG={};Object.entries(ratings).forEach(([t,v])=>{const m=M.find(x=>x.t===t);if(m)m.g.forEach(g=>(byG[g]=byG[g]||[]).push(v))});
+  const bg=Object.entries(byG);
+  $("#mine").innerHTML=bg.length?bg.map(([g,a])=>{const av=a.reduce((x,y)=>x+y,0)/a.length;return `<div class="hbar"><span class="nm">${g} (${a.length})</span><div class="track"><div class="fill" style="width:${av/5*100}%"></div></div><span class="val">${av.toFixed(1)}★</span></div>`}).join(""):`<div class="empty" style="padding:18px">Tap the stars on any film. Your averages by genre build up here and nudge each fit score.</div>`;
   const al=M.filter(m=>alerts[m.t]).sort((a,b)=>a.d.localeCompare(b.d));
-  document.getElementById("alerts").innerHTML=al.length?al.map(m=>{const dd=days(m);return `<div class="hbar"><span class="nm">${esc(m.t)}</span><span class="count-down">${m.s==="sale"?"On sale now":dd>0?dd+" days to release":"Out now"}</span><span class="val">${fmt(m.d).replace(/, \d+/,"")}</span></div>`}).join("")
-   :`<div class="empty" style="padding:18px">Press "Alert me" on an upcoming film to track it here.</div>`;
+  $("#alerts").innerHTML=al.length?al.map(m=>{const dd=days(m);return `<div class="hbar"><span class="nm">${esc(m.t)}</span><span class="cd">${m.s==="sale"?"On sale now":dd>0?dd+" days to go":"Out now"}</span><span class="val">${fmt(m.d,{month:"short",day:"numeric"})}</span></div>`}).join(""):`<div class="empty" style="padding:18px">Press "Alert me" on an upcoming film to track it here.</div>`;
+}
+function renderTaste(){
+  const ord=[...SEED].sort((a,b)=>b.d.localeCompare(a.d));
+  $("#seedList").innerHTML=ord.map(s=>`<div class="seedrow"><div style="min-width:0"><div class="nm">${esc(s.t)}${s.intl?' <span class="b intl">India</span>':""}</div><div class="meta">${fmt(s.d,{month:"short",year:"numeric"})} · ${s.g.join(" / ")}</div></div>
+    <div style="text-align:right"><div class="stars" role="radiogroup" aria-label="Rate ${esc(s.t)}">${[1,2,3,4,5].map(i=>`<button class="star ${i<=seedR[s.t]?"on":""}" data-seed="${esc(s.t)}" data-v="${i}" aria-label="${i} star${i>1?"s":""}" aria-checked="${i===seedR[s.t]}" role="radio">★</button>`).join("")}</div>
+    <div class="who">${seedEdited[s.t]?"Your rating":"Starter rating"}</div></div></div>`).join("");
+  const prof=Object.entries(TASTE).filter(([,v])=>v.n).sort((a,b)=>b[1].w-a[1].w);
+  $("#profile").innerHTML=prof.map(([g,v])=>`<div class="hbar"><span class="nm">${g} <span style="color:var(--ink-faint)">(${v.n})</span></span><div class="track"><div class="fill" style="width:${Math.min(100,v.w*100)}%"></div></div><span class="val">${Math.round(v.w*100)}</span></div>`).join("");
+}
+function renderAll(){TASTE=taste();renderStats();renderGrid();renderLobby();renderTaste();M.forEach(paintPoster)}
+
+// ── seat map ──
+const ROWS="ABCDEFGHIJKL".split("");
+function seatZone(row,col){
+  const ri=ROWS.indexOf(row);
+  if(ri<4) return "skip";
+  const center=col>=4&&col<=9;
+  if(seatPref==="middle") return (ri>=5&&ri<=8&&center)?"pref":"ok";
+  return (ri>=9&&center)?"pref":"ok";
+}
+function seatMap(){
+  const rows=ROWS.map(r=>`<div class="srow"><b>${r}</b>${Array.from({length:14},(_,c)=>c===3||c===10?`<i class="seat gap"></i>`:`<i class="seat ${seatZone(r,c)}"></i>`).join("")}</div>`).join("");
+  const ask=seatPref==="middle"?"Rows F–I, centre block (seats 5–10)":"Rows J–L, centre block (seats 5–10)";
+  return `<div class="seatpick" role="radiogroup" aria-label="Seat preference">
+     <button class="btn" data-seat="middle" aria-pressed="${seatPref==="middle"}">Middle of the house</button>
+     <button class="btn" data-seat="back" aria-pressed="${seatPref==="back"}">Back rows</button></div>
+   <div class="screen"></div><div class="screen-l">SCREEN</div>
+   <div class="seats" aria-hidden="true">${rows}</div>
+   <div class="seatkey"><span><i style="background:var(--lime)"></i>Your pick zone</span><span><i style="background:#5a4680"></i>Fine</span><span><i style="background:#2a1d3d"></i>Rows A–D, skipped</span></div>
+   <div class="ask">On the seat map, choose <b>${ask}</b>. Avoid rows A–D. Seat numbering varies by auditorium, so aim for the middle of the row.</div>`;
 }
 
-function renderAll(){renderStats();renderGrid();renderLobby()}
+// ── box office drawer ──
+let current=null;
+function openBox(t){
+  const m=M.find(x=>x.t===t); if(!m) return; current=t;
+  const f=fit(m),r=ratings[m.t]||0,list=sortedTh(m);
+  const yt=`https://www.youtube.com/results?search_query=${encodeURIComponent(base(m.t)+" official trailer")}`;
+  $("#boxInner").innerHTML=`
+   <div class="box-head" style="--hue:${m.hue}">
+    <button class="box-close" id="boxClose" aria-label="Close">×</button>
+    <div class="box-poster"><img alt="Poster for ${esc(m.t)}" data-poster="${esc(m.t)}" ${posters[m.t]?`src="${esc(posters[m.t])}"`:""} onerror="this.remove()"></div>
+    <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+     <div class="eyebrow">${STATUS[m.s][1]} · ${fmt(m.d)}</div>
+     <h2 id="boxTitle">${esc(m.t)}</h2>
+     <div class="meta">${m.g.join(" / ")} · ${esc(m.lang)}</div>
+     <p class="why" style="max-width:60ch">${esc(m.why)}</p>
+     <div class="scores"><div class="ring" style="--p:${f};--ringc:${ringColor(f)}"><span><div>${f}<small>FIT</small></div></span></div>
+      <div><span class="k">Tomatometer </span><span class="v">${m.rt!=null?m.rt+"%":"Not yet reviewed"}</span></div>${m.pm?`<div><span class="k">Audience </span><span class="v">${m.pm}%</span></div>`:""}</div>
+     ${m.osc?`<div class="oscar">${esc(m.osc)}</div>`:""}
+     <div class="actions"><a class="btn primary" href="${fandango(m)}" target="_blank" rel="noopener">Book on Fandango</a><a class="btn" href="${yt}" target="_blank" rel="noopener">▶ Watch trailer</a><a class="btn" href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(base(m.t))}" target="_blank" rel="noopener">Reviews</a></div>
+     <div class="rate" style="border:0;padding:0"><span class="rlab">Your rating</span>${stars(m,r)}</div>
+    </div>
+   </div>
+   <div class="box-body">
+    <div class="sec">
+     <h3>Next 3 days</h3><p class="hint">Worked out from release and on-sale dates. Book confirms real showtimes and seats.</p>
+     <div class="days" style="margin-bottom:18px">${[0,1,2].map(i=>{const o=outlook(m,i);return `<div class="day ${o.cls}"><b>${o.label} · ${fmt(o.date,{month:"short",day:"numeric"})}</b><span>${o.txt}</span>${o.cls!=="no"?`<div style="margin-top:6px"><a href="${fandango(m)}" target="_blank" rel="noopener" style="font-size:12px">Book ↗</a></div>`:""}</div>`}).join("")}</div>
+     <h3>Theaters & drive time</h3><p class="hint">From ${esc(origin.label)}${Object.values(drive).some(d=>d.est)?", estimated":""}. No live traffic.</p>
+     <div class="th-list">${list.map((k,i)=>{const t=TH[k];return `<div class="th ${i===0?"best":""}"><span class="nm">${esc(t.n)}${i===0?' <span class="b now" style="margin-left:4px">Closest</span>':""}</span><span class="drive">${drive[k]?(drive[k].est?"~":"")+drive[k].min+" min":"—"}<small>${drive[k]?drive[k].mi.toFixed(1)+" mi":""}</small></span><span class="ad">${esc(t.a)}</span><div class="links"><a href="${mapsLink(k)}" target="_blank" rel="noopener">Directions in Google Maps ↗</a><a href="${fandango(m)}" target="_blank" rel="noopener">Showtimes ↗</a></div></div>`}).join("")}</div>
+    </div>
+    <div class="sec"><h3>Your seat</h3><p class="hint">Saved for every film. Rows A–D are always skipped.</p><div id="seatWrap">${seatMap()}</div></div>
+   </div>`;
+  const d=$("#box"); if(!d.open) d.showModal(); paintPoster(m);
+  if(!posters[m.t]) poster(m).then(()=>paintPoster(m));
+}
+$("#box").addEventListener("click",e=>{if(e.target.id==="box"||e.target.id==="boxClose")$("#box").close()});
 
+// ── events ──
 document.addEventListener("click",e=>{
-  const s=e.target.closest(".star"); if(s){const t=s.dataset.t,v=+s.dataset.v;if(ratings[t]===v)delete ratings[t];else ratings[t]=v;store.set("mr.ratings",ratings);renderAll();return}
-  const a=e.target.closest(".alert"); if(a){const t=a.dataset.t;if(alerts[t])delete alerts[t];else alerts[t]=1;store.set("mr.alerts",alerts);renderAll();return}
-  const tb=e.target.closest(".tab"); if(tb){tab=tb.dataset.k;store.set("mr.tab",tab);renderTabs();renderGrid();return}
-  const g=e.target.closest(".g"); if(g){genre=g.dataset.g;renderTabs();renderGrid();return}
+  const sd=e.target.closest("[data-seed]");if(sd){const t=sd.dataset.seed,v=+sd.dataset.v;seedR[t]=v;seedEdited[t]=1;
+    store.set("mr.seed",Object.fromEntries(Object.keys(seedEdited).map(k=>[k,seedR[k]])));store.set("mr.seedEdited",seedEdited);
+    toast(`${t}: ${"★".repeat(v)} · fit scores updated`);renderAll();return}
+  if(e.target.id==="seedReset"){seedR=Object.fromEntries(SEED.map(s=>[s.t,seedStars(s)]));seedEdited={};store.set("mr.seed",{});store.set("mr.seedEdited",{});toast("Starter ratings restored");renderAll();return}
+  const s=e.target.closest(".star");if(s){const t=s.dataset.t,v=+s.dataset.v;if(ratings[t]===v)delete ratings[t];else ratings[t]=v;store.set("mr.ratings",ratings);
+    toast(ratings[t]?`Rated ${t}: ${"★".repeat(v)}`:`Rating cleared`);renderAll();if($("#box").open)openBox(t);return}
+  const a=e.target.closest(".alert");if(a){const t=a.dataset.t;if(alerts[t])delete alerts[t];else alerts[t]=1;store.set("mr.alerts",alerts);toast(alerts[t]?`Tracking ${t}`:`Stopped tracking ${t}`);renderAll();return}
+  const o=e.target.closest("[data-open]");if(o){openBox(o.dataset.open);return}
+  const st=e.target.closest("[data-seat]");if(st){seatPref=st.dataset.seat;store.set("mr.seat",seatPref);$("#seatWrap").innerHTML=seatMap();return}
+  const tb=e.target.closest(".tab");if(tb){tab=tb.dataset.k;store.set("mr.tab",tab);renderTabs();renderGrid();return}
+  const g=e.target.closest(".g");if(g){genre=g.dataset.g;renderTabs();renderGrid();return}
 });
 document.addEventListener("change",e=>{if(e.target.id==="sortsel"){sort=e.target.value;store.set("mr.sort",sort);renderGrid()}});
+document.addEventListener("input",e=>{if(e.target.id==="search"){q=e.target.value;renderGrid()}});
+$("#surprise").addEventListener("click",()=>{const pool=M.filter(m=>fit(m)>=70);const m=pool[Math.floor(Math.random()*pool.length)];openBox(m.t)});
 
-// marquee bulbs
-function bulbs(){const el=document.getElementById("bulbs"),w=el.clientWidth,h=el.clientHeight,gap=26;let html="",i=0;
+// card tilt
+const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(!still&&matchMedia("(hover:hover)").matches){
+  document.addEventListener("pointermove",e=>{const c=e.target.closest("[data-tilt]");document.querySelectorAll("[data-tilt].tilting").forEach(x=>{if(x!==c){x.classList.remove("tilting");x.style.transform=""}});
+    if(!c)return;const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    c.classList.add("tilting");c.style.transform=`perspective(900px) rotateY(${x*6}deg) rotateX(${-y*6}deg) translateY(-4px)`});
+}
+
+// marquee bulbs + spotlight sky
+function bulbs(){const el=$("#bulbs"),w=el.clientWidth,h=el.clientHeight,gap=26;let html="",i=0;
   for(let x=0;x<w;x+=gap){html+=`<i style="left:${x}px;top:-4px;animation-delay:${(i++%4)*.2}s"></i><i style="left:${x}px;bottom:-4px;animation-delay:${(i++%4)*.2}s"></i>`}
   for(let y=gap;y<h-gap/2;y+=gap){html+=`<i style="top:${y}px;left:-4px;animation-delay:${(i++%4)*.2}s"></i><i style="top:${y}px;right:-4px;animation-delay:${(i++%4)*.2}s"></i>`}
   el.innerHTML=html}
-// spotlight sky
-function sky(){const c=document.getElementById("sky"),x=c.getContext("2d");let W,H;
+function sky(){const c=$("#sky"),x=c.getContext("2d");let W,H;
   const lights=[["255,79,139",.18],["255,200,74",.14],["65,211,255",.12],["199,125,255",.14]].map((col,i)=>({col:col[0],a:col[1],ph:i*1.7,sp:.00012+i*.00004}));
   function size(){W=c.width=innerWidth;H=c.height=innerHeight}size();addEventListener("resize",size);
-  const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function frame(t){x.clearRect(0,0,W,H);
-    lights.forEach((l,i)=>{const ang=Math.sin(t*l.sp+l.ph)*.55;const ox=W*(.15+i*.23),oy=H+40;
-      const len=H*1.4,tx=ox+Math.sin(ang)*len,ty=oy-Math.cos(ang)*len;
-      const g=x.createLinearGradient(ox,oy,tx,ty);g.addColorStop(0,`rgba(${l.col},${l.a})`);g.addColorStop(1,`rgba(${l.col},0)`);
-      const sp=W*.12;x.fillStyle=g;x.beginPath();x.moveTo(ox,oy);x.lineTo(tx-sp,ty);x.lineTo(tx+sp,ty);x.closePath();x.fill()});
+  function frame(t){x.clearRect(0,0,W,H);lights.forEach((l,i)=>{const ang=Math.sin(t*l.sp+l.ph)*.55,ox=W*(.15+i*.23),oy=H+40,len=H*1.4,tx=ox+Math.sin(ang)*len,ty=oy-Math.cos(ang)*len;
+    const g=x.createLinearGradient(ox,oy,tx,ty);g.addColorStop(0,`rgba(${l.col},${l.a})`);g.addColorStop(1,`rgba(${l.col},0)`);const sp=W*.12;x.fillStyle=g;x.beginPath();x.moveTo(ox,oy);x.lineTo(tx-sp,ty);x.lineTo(tx+sp,ty);x.closePath();x.fill()});
     if(!still)requestAnimationFrame(frame)}
   requestAnimationFrame(frame)}
 
-renderTabs();renderAll();bulbs();addEventListener("resize",bulbs);sky();
+renderTabs();estimate();renderAll();bulbs();addEventListener("resize",bulbs);sky();route();loadPosters();
 })();
 </script>
 </body>
